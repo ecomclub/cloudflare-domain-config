@@ -1,0 +1,16 @@
+{
+  "name": "cloudflare-domain-config",
+  "version": "0.1.0",
+  "description": "Configure domain to E-Com Plus store with Cloudflare API",
+  "main": "main.js",
+  "scripts": {
+    "test": "node ./main.js"
+  },
+  "author": "Leonardo Matos de Paula",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "rest-auto-router": "3.x",
+    "ajv": "5.x",
+    "ajv-i18n": "2.x"
+  }
+}
