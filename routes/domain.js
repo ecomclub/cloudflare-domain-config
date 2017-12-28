@@ -14,15 +14,35 @@ const ajv = Ajv({ allErrors: true })
 const createSchema = {
   '$schema': 'http://json-schema.org/draft-06/schema#',
   'type': 'object',
-  'required': [ 'domain' ],
+  'required': [ 'domain', 'subdomain', 'bool_config', 'credentials' ],
   'additionalProperties': false,
   'properties': {
     'domain': {
       'type': 'string',
       'maxLength': 50,
       'format': 'hostname'
+    },
+    'subdomain': {
+      'type': 'string',
+      'maxLength': 50,
+      'format': 'hostname'
+    },
+    'bool_config': {
+      'type': 'boolean'
+    },
+    'credentials': {
+      'properties': {
+        'api-key': {
+          'type': 'string'
+        },
+        'email': {
+          'type': 'string'
+        },
+        'zoneID': {
+          'type': 'string'
+        }
+      }
     }
-    // TODO: complete POST body schema
   }
 }
 const createValidate = ajv.compile(createSchema)
