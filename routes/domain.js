@@ -14,32 +14,41 @@ const ajv = Ajv({ allErrors: true })
 const createSchema = {
   '$schema': 'http://json-schema.org/draft-06/schema#',
   'type': 'object',
-  'required': [ 'domain', 'subdomain', 'bool_config', 'credentials' ],
+  'required': [ 'domain', 'subdomain', 'domain_redirect', 'credentials' ],
   'additionalProperties': false,
   'properties': {
     'domain': {
       'type': 'string',
-      'maxLength': 50,
+      'maxLength': 70,
       'format': 'hostname'
     },
     'subdomain': {
       'type': 'string',
-      'maxLength': 50,
-      'format': 'hostname'
+      'maxLength': 30,
+      'pattern': '^[a-z0-9-]+$'
     },
-    'bool_config': {
+    'domain_redirect': {
       'type': 'boolean'
     },
     'credentials': {
+      'type': 'object',
+      'required': [ 'api_key', 'email', 'zone_id' ],
+      'additionalProperties': false,
       'properties': {
-        'api-key': {
-          'type': 'string'
+        'api_key': {
+          'type': 'string',
+          'minLength': 30,
+          'maxLength': 90,
+          'pattern': '^[a-f0-9]+$'
         },
         'email': {
-          'type': 'string'
+          'type': 'string',
+          'maxLength': 100,
+          'format': 'email'
         },
-        'zoneID': {
-          'type': 'string'
+        'zone_id': {
+          'type': 'string',
+          'pattern': '^[a-f0-9]{32}$'
         }
       }
     }
