@@ -40,12 +40,9 @@ function ajvErrorHandling (errors, respond) {
   respond({}, null, 400, 'CF1001', devMsg, usrMsg, moreInfo)
 }
 
-function post (id, meta, body, respond, props) {
+function post (id, meta, body, respond) {
   if (id) {
     respond({}, null, 406, 'CF1002', 'Unexpected resource ID on request URL')
-  } else if (id === 'schema') {
-    // return json schema
-    respond(createSchema)
   } else {
     // ajv
     let valid = createValidate(body)
@@ -58,6 +55,16 @@ function post (id, meta, body, respond, props) {
   }
 }
 
+function get (id, meta, body, respond) {
+  if (id && id === 'schema') {
+    // return json schema
+    respond(createSchema)
+  } else {
+    respond({}, null, 406, 'CF1003', 'GET request is acceptable only to JSON schema, at /domain/schema.json')
+  }
+}
+
 module.exports = {
-  'POST': post
+  'POST': post,
+  'GET': get
 }
