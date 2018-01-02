@@ -78,8 +78,65 @@ function post (id, meta, body, respond) {
     if (!valid) {
       ajvErrorHandling(createValidate.errors, respond)
     } else {
-      // valid JSON
-      // TODO: Cloudflare domain setup with API
+      let https = require('https')
+      let options = {
+        hostname: 'api.cloudflare.com',
+        path: '/client/v4/zones/' + body.credentials.zoneKey + '/dns_records',
+        method: 'POST',
+        headers: {
+          'X-Auth-Email': body.credentials.email,
+          'X-Auth-Key': body.credentials.apikey,
+          'Content-Type': 'application/json'
+        }
+      }
+      let setupDomain = {}
+      if (body.redirect_dns === true) {
+        setupDomain = {
+          'type': 'A',
+          'name': body.subdomain,
+          'content': '174.138.108.73'
+        }
+      } else {
+        setupDomain = {
+          'type': 'CNAME',
+          'name': body.subdomain,
+          'content': 'storefront.e-com.plus'
+        }
+      }
+
+      let req = https.request(options, function (res) {
+        let rawData = ''
+        res.setEncoding('utf8')
+        res.on('data', function (chunk) { rawData += chunk })
+        res.on('end', function () {
+          try {
+            let body = JSON.parse(rawData)
+            let err
+            if (res.statusCode === 200) {
+              err = null
+            } else {
+              let msg
+              if (body.hasOwnProperty('message')) {
+                msg = body.message
+              } else {
+                msg = 'Unknown error, see response objet to more info'
+                // logger.error(body)
+              }
+              err = new Error(msg)
+              console.error(err)
+            }
+          } catch (e) {
+            console.error(e)
+          }
+        })
+        req.on('error', function (err) {
+          console.error(err)
+        })
+        if (body) {
+          req.write(JSON.stringify(setupDomain))
+        }
+        req.end()
+      })
     }
   }
 }
