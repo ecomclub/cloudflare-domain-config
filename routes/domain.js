@@ -81,62 +81,72 @@ function post (id, meta, body, respond) {
       let https = require('https')
       let options = {
         hostname: 'api.cloudflare.com',
-        path: '/client/v4/zones/' + body.credentials.zoneKey + '/dns_records',
+        path: '/client/v4/zones/' + body.credentials.zone_id + '/dns_records',
         method: 'POST',
         headers: {
           'X-Auth-Email': body.credentials.email,
-          'X-Auth-Key': body.credentials.apikey,
+          'X-Auth-Key': body.credentials.api_key,
           'Content-Type': 'application/json'
         }
       }
-      let setupDomain = {}
-      if (body.redirect_dns === true) {
-        setupDomain = {
-          'type': 'A',
-          'name': body.subdomain,
-          'content': '174.138.108.73'
-        }
-      } else {
-        setupDomain = {
-          'type': 'CNAME',
-          'name': body.subdomain,
-          'content': 'storefront.e-com.plus'
-        }
+
+      // body to create a record on cloudflare
+      let setupDomain = {
+        'type': 'CNAME',
+        'name': body.subdomain,
+        'content': 'storefront.e-com.plus'
       }
 
-      let req = https.request(options, function (res) {
-        let rawData = ''
-        res.setEncoding('utf8')
-        res.on('data', function (chunk) { rawData += chunk })
-        res.on('end', function () {
-          try {
-            let body = JSON.parse(rawData)
-            let err
-            if (res.statusCode === 200) {
-              err = null
-            } else {
-              let msg
-              if (body.hasOwnProperty('message')) {
-                msg = body.message
+      // function to send the request
+      let send = function () {
+        let req = https.request(options, function (res) {
+          let rawData = ''
+          res.setEncoding('utf8')
+          res.on('data', function (chunk) { rawData += chunk })
+          res.on('end', function () {
+            try {
+              let body = JSON.parse(rawData)
+              let err
+              if (res.statusCode === 200) {
+                err = null
               } else {
-                msg = 'Unknown error, see response objet to more info'
-                // logger.error(body)
+                // error
+                let msg
+                if (body.hasOwnProperty('message')) {
+                  msg = body.message
+                } else {
+                  msg = 'Unknown error, see response objet to more info'
+                  // logger.error(body)
+                }
+                err = new Error(msg)
+                console.error(err)
               }
-              err = new Error(msg)
-              console.error(err)
+            } catch (e) {
+              console.error(e)
             }
-          } catch (e) {
-            console.error(e)
+          })
+          // ERROR
+          req.on('error', function (err) {
+            console.error(err)
+          })
+
+          // POST
+          req.write(JSON.stringify(setupDomain))
+          // end request
+          req.end()
+
+          // domain redirect
+          if (body.domain_redirect === true) {
+            setupDomain = {
+              'type': 'A',
+              'name': '@',
+              'content': '174.138.108.73' // storefront.e-com.plus
+            }
+            // resend the POST with different body
+            send()
           }
         })
-        req.on('error', function (err) {
-          console.error(err)
-        })
-        if (body) {
-          req.write(JSON.stringify(setupDomain))
-        }
-        req.end()
-      })
+      }
     }
   }
 }
