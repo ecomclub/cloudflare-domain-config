@@ -112,14 +112,16 @@ function post (id, meta, body, respond) {
               } else {
                 // error
                 let msg
-                if (body.hasOwnProperty('message')) {
-                  msg = body.message
+                if (body.hasOwnProperty('errors')) {
+                  msg = body.errors
                 } else {
                   msg = 'Unknown error, see response objet to more info'
                   // logger.error(body)
                 }
                 err = new Error(msg)
-                console.error(err)
+
+                // change the errorCode
+                respond({}, null, res.statusCode, '', err)
               }
             } catch (e) {
               console.error(e)
@@ -127,7 +129,8 @@ function post (id, meta, body, respond) {
           })
           // ERROR
           req.on('error', function (err) {
-            console.error(err)
+            // change the errorCode
+            respond({}, null, res.statusCode, '', err)
           })
 
           // POST
