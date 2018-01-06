@@ -1,7 +1,7 @@
 'use strict'
 
 // log on files
-// const logger = require('./../lib/Logger.js')
+const logger = require('./../lib/Logger.js')
 
 // JSON Schema validation with AJV
 // based on http://json-schema.org/
@@ -106,11 +106,15 @@ function post (id, meta, body, respond) {
           res.on('end', function () {
             try {
               let body = JSON.parse(rawData)
-              let err
               if (res.statusCode === 200) {
-                err = null
+                // done
+                respond(null, null, 204)
               } else {
                 // error
+                // @TODO: error handling
+                // we need to treat the errors
+                // response must be more conclusive and with usrMsg too
+                // at this moment we are reponding only with devMsg
                 let msg
                 if (body.hasOwnProperty('errors')) {
                   msg = body.errors
@@ -118,19 +122,18 @@ function post (id, meta, body, respond) {
                   msg = 'Unknown error, see response objet to more info'
                   // logger.error(body)
                 }
-                err = new Error(msg)
 
-                // change the errorCode
-                respond({}, null, res.statusCode, '', err)
+                respond({}, null, res.statusCode, 'CF1005', msg)
               }
             } catch (e) {
-              console.error(e)
+              logger.error(e)
             }
           })
           // ERROR
           req.on('error', function (err) {
-            // change the errorCode
-            respond({}, null, res.statusCode, '', err)
+            // server error
+            logger.error(err)
+            respond({}, null, 500, 'CF1004')
           })
 
           // POST
