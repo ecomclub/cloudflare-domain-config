@@ -137,7 +137,6 @@ function post (id, meta, body, respond) {
                       devMsg = 'See user_message for more details'
                     }
                   } else {
-                    // TODO: improve usrMsg
                     devMsg = 'Unknown error, see response objet to more info'
                   }
 
