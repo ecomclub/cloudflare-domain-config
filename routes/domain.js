@@ -259,7 +259,7 @@ function post (id, meta, body, respond) {
 }
 
 function get (id, meta, body, respond) {
-  if (id && id === 'schema') {
+  if (id === 'schema') {
     // return json schema
     respond(createSchema)
   } else {
