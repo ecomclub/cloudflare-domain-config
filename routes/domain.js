@@ -130,7 +130,7 @@ function post (id, meta, body, respond) {
               } else {
                 errorRequest = true
                 // error authentication
-                if (response.hasOwnProperty('errors')) {
+                if (typeof response === 'object' && response !== null && Array.isArray(response.errors)) {
                   // example of error response
                   // {
                   //   "result": null,
