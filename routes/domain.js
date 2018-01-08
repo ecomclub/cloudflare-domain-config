@@ -188,7 +188,8 @@ function post (id, meta, body, respond) {
             'Cache Level': 'Bypass',
             'Automatic HTTPS Rewrites': 'On'
           }
-        ]
+        ],
+        'status': 'active'
       }
       path = '/client/v4/zones/' + body.credentials.zone_id + '/pagerules'
       send()
