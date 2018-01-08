@@ -33,6 +33,9 @@ const createSchema = {
     'page_rule': {
       'type': 'boolean'
     },
+    'dns_record': {
+      'type': 'boolean'
+    },
     'credentials': {
       'type': 'object',
       'required': [ 'api_key', 'email', 'zone_id' ],
@@ -83,7 +86,7 @@ function post (id, meta, body, respond) {
     } else {
       let https = require('https')
       // create dns record
-      if (body.page_rule === false) {
+      if (body.dns_record === true) {
         let options = {
           hostname: 'api.cloudflare.com',
           path: '/client/v4/zones/' + body.credentials.zone_id + '/dns_records',
@@ -118,11 +121,19 @@ function post (id, meta, body, respond) {
                   // error authentication
                   let usrMsg = []
                   let devMsg
+
                   if (body.hasOwnProperty('errors')) {
+                    // example of error response
+                    // {
+                    //   "result": null,
+                    //   "success": false,
+                    //   "errors": [{"code":1003,"message":"Invalid or missing zone id."}],
+                    //   "messages": []
+                    // }
+
                     for (var i = 0; i < body.errors.length; i++) {
                       // message from error array
                       usrMsg.push(body.errors[i].message)
-                      // TODO: improve devMsg
                       devMsg = 'See user_message for more details'
                     }
                   } else {
@@ -160,8 +171,10 @@ function post (id, meta, body, respond) {
             }
           })
         }
+      }
+
       // create page rule
-      } else {
+      if (body.page_rule === true) {
         let options = {
           hostname: 'api.cloudflare.com',
           path: '/client/v4/zones/' + body.credentials.zone_id + '/pagerules',
@@ -176,7 +189,11 @@ function post (id, meta, body, respond) {
         let setupPageRule = {
           'targets': [
             {
-              'target': body.subdomain
+              'target': 'url',
+              'constraint': {
+                'operator': 'matches',
+                'value': '*' + body.subdomain + '/*'
+              }
             }
           ],
           'actions': [
@@ -204,14 +221,20 @@ function post (id, meta, body, respond) {
                 let usrMsg = []
                 let devMsg
                 if (body.hasOwnProperty('errors')) {
+                  // example of error response
+                  // {
+                  //   "result": null,
+                  //   "success": false,
+                  //   "errors": [{"code":1003,"message":"Invalid or missing zone id."}],
+                  //   "messages": []
+                  // }
+
                   for (var i = 0; i < body.errors.length; i++) {
                     // message from error array
                     usrMsg.push(body.errors[i].message)
-                    // TODO: improve devMsg
                     devMsg = 'See user_message for more details'
                   }
                 } else {
-                  // TODO: improve usrMsg
                   devMsg = 'Unknown error, see response objet to more info'
                 }
 
