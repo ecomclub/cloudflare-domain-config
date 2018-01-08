@@ -14,7 +14,7 @@ const ajv = Ajv({ allErrors: true })
 const createSchema = {
   '$schema': 'http://json-schema.org/draft-06/schema#',
   'type': 'object',
-  'required': [ 'domain', 'subdomain', 'domain_redirect', 'credentials', 'page_rule' ],
+  'required': [ 'domain', 'subdomain', 'domain_redirect', 'credentials', 'dns_record', 'page_rule' ],
   'additionalProperties': false,
   'properties': {
     'domain': {
