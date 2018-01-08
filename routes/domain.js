@@ -111,26 +111,33 @@ function post (id, meta, body, respond) {
           res.setEncoding('utf8')
           res.on('data', function (chunk) { rawData += chunk })
           res.on('end', function () {
-            if (errorRequest === false) {
+            if (!errorRequest) {
               let response
               try {
                 response = JSON.parse(rawData)
               } catch (e) {
                 let devMsg = 'Cloudflare sent a invalid JSON'
                 respond({}, null, res.statusCode, 'CF1007', devMsg)
+                return
               }
 
               if (res.statusCode === 200) {
                 done++
-                if (body.domain_redirect === true && done === 3) {
-                  respond(null, null, 204)
+                // check if all requests are done
+                // DNS and page rules
+                if (body.domain_redirect === true) {
+                  // one request more to config domain redirect
+                  // 3 requests
+                  if (done === 3) {
+                    respond(null, null, 204)
+                  }
                 } else if (done === 2) {
                   respond(null, null, 204)
                 }
               } else {
+                // set error true to not treat other responses
                 errorRequest = true
-                let devMsg
-                // error authentication
+
                 if (typeof response === 'object' && response !== null && Array.isArray(response.errors)) {
                   // example of error response
                   // {
@@ -139,42 +146,48 @@ function post (id, meta, body, respond) {
                   //   "errors": [{"code":1003,"message":"Invalid or missing zone id."}],
                   //   "messages": []
                   // }
+                  let devMsg
                   let usrMsg = {}
+
                   for (let i = 0; i < response.errors.length; i++) {
-                    if (response.errors[i].message !== null && response.errors[i].code !== null) {
-                      usrMsg.en_us = response.errors[i].message
-                      devMsg = 'Error code:' + response.errors[i].code + ', more details on user_message'
-                      break
-                    } else {
-                      devMsg = 'Response error dont have error code and error message on the same element'
-                      respond({}, null, res.statusCode, 'CF1010', devMsg)
+                    if (typeof response.errors[i] === 'object' && response.errors[i] !== null) {
+                      if (response.errors[i].hasOwnProperty('message')) {
+                        usrMsg.en_us = response.errors[i].message
+                        devMsg = 'Error code: ' + response.errors[i].code + ', more details on user_message'
+                        break
+                      }
                     }
                   }
 
-                  // translate to portuguese
-                  translate(usrMsg.en_us, {from: 'en', to: 'pt'}).then(res => {
-                    usrMsg.pt_br = res.text
-                    respond({}, null, res.statusCode, 'CF1005', devMsg, usrMsg)
-                  }).catch(err => {
-                    logger.error(err)
-                    devMsg = 'Cant translate to portuguese'
-                    respond({}, null, res.statusCode, 'CF1009', devMsg)
-                  })
+                  if (devMsg === undefined) {
+                    // no valid error object in Cloudflare response
+                    respond({}, null, res.statusCode, 'CF1010')
+                  } else {
+                    // translate to portuguese
+                    translate(usrMsg.en_us, { from: 'en', to: 'pt' }).then(res => {
+                      usrMsg.pt_br = res.text
+                      respond({}, null, res.statusCode, 'CF1005', devMsg, usrMsg)
+                    }).catch(err => {
+                      logger.error(err)
+                      // respond without pt_br
+                      respond({}, null, res.statusCode, 'CF1009', devMsg, usrMsg)
+                    })
+                  }
                 } else {
-                  devMsg = 'Unknown error, see response objet to more info'
-                  respond({}, null, res.statusCode, 'CF1008', devMsg)
+                  // unknown error
+                  respond({}, null, res.statusCode, 'CF1008')
                 }
               }
             }
           })
-          // ERROR
+
           req.on('error', function (err) {
             // server error
             logger.error(err)
             respond({}, null, 500, 'CF1004')
           })
 
-          // POST
+          // POST body
           req.write(JSON.stringify(setup))
           // end request
           req.end()
