@@ -101,11 +101,17 @@ function post (id, meta, body, respond) {
         'content': 'storefront.e-com.plus'
       }
 
+      // count sent and finished requests
+      let requests = 0
       let done = 0
+      // response with error
       let errorRequest = false
 
       // function to send the request
       let send = function () {
+        // more one request
+        requests++
+
         let req = https.request(options, function (res) {
           let rawData = ''
           res.setEncoding('utf8')
@@ -124,13 +130,7 @@ function post (id, meta, body, respond) {
                 done++
                 // check if all requests are done
                 // DNS and page rules
-                if (body.domain_redirect === true) {
-                  // one request more to config domain redirect
-                  // 3 requests
-                  if (done === 3) {
-                    respond(null, null, 204)
-                  }
-                } else if (done === 2) {
+                if (done === requests) {
                   respond(null, null, 204)
                 }
               } else {
@@ -206,29 +206,53 @@ function post (id, meta, body, respond) {
         send()
       }
 
-      // create a page rule
+      // create a page rules
+      options.path = '/client/v4/zones/' + body.credentials.zone_id + '/pagerules'
+
       setup = {
-        'targets': [
-          {
-            'target': 'url',
-            'constraint': {
-              'operator': 'matches',
-              'value': body.subdomain + '.' + body.domain + '/*'
-            }
+        'targets': [{
+          'target': 'url',
+          'constraint': {
+            'operator': 'matches',
+            'value': 'http://' + body.subdomain + '.' + body.domain + '/*'
           }
-        ],
-        'actions': [
-          {
-            'SSL': 'Flexible',
-            'Always Online': 'On',
-            'Security Level': 'Medium',
-            'Cache Level': 'Bypass',
-            'Automatic HTTPS Rewrites': 'On'
-          }
-        ],
+        }],
+        'actions': [{
+          'id': 'always_use_https',
+          'value': 'on'
+        }],
+        'priority': 1,
         'status': 'active'
       }
-      options.path = '/client/v4/zones/' + body.credentials.zone_id + '/pagerules'
+      send()
+
+      setup = {
+        'targets': [{
+          'target': 'url',
+          'constraint': {
+            'operator': 'matches',
+            'value': body.subdomain + '.' + body.domain + '/*'
+          }
+        }],
+        'actions': [{
+          'id': 'ssl',
+          'value': 'flexible'
+        }, {
+          'id': 'always_online',
+          'value': 'on'
+        }, {
+          'id': 'security_level',
+          'value': 'medium'
+        }, {
+          'id': 'cache_level',
+          'value': 'cache_everything'
+        }, {
+          'id': 'origin_cache_control',
+          'value': 'on'
+        }],
+        'priority': 2,
+        'status': 'active'
+      }
       send()
     }
   }
