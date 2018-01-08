@@ -14,7 +14,7 @@ const ajv = Ajv({ allErrors: true })
 const createSchema = {
   '$schema': 'http://json-schema.org/draft-06/schema#',
   'type': 'object',
-  'required': [ 'domain', 'subdomain', 'domain_redirect', 'credentials' ],
+  'required': [ 'domain', 'subdomain', 'domain_redirect', 'credentials', 'page_rule' ],
   'additionalProperties': false,
   'properties': {
     'domain': {
@@ -28,6 +28,9 @@ const createSchema = {
       'pattern': '^[a-z0-9-]+$'
     },
     'domain_redirect': {
+      'type': 'boolean'
+    },
+    'page_rule': {
       'type': 'boolean'
     },
     'credentials': {
@@ -79,26 +82,113 @@ function post (id, meta, body, respond) {
       ajvErrorHandling(createValidate.errors, respond)
     } else {
       let https = require('https')
-      let options = {
-        hostname: 'api.cloudflare.com',
-        path: '/client/v4/zones/' + body.credentials.zone_id + '/dns_records',
-        method: 'POST',
-        headers: {
-          'X-Auth-Email': body.credentials.email,
-          'X-Auth-Key': body.credentials.api_key,
-          'Content-Type': 'application/json'
+      // create dns record
+      if (body.page_rule === false) {
+        let options = {
+          hostname: 'api.cloudflare.com',
+          path: '/client/v4/zones/' + body.credentials.zone_id + '/dns_records',
+          method: 'POST',
+          headers: {
+            'X-Auth-Email': body.credentials.email,
+            'X-Auth-Key': body.credentials.api_key,
+            'Content-Type': 'application/json'
+          }
         }
-      }
 
-      // body to create a record on cloudflare
-      let setupDomain = {
-        'type': 'CNAME',
-        'name': body.subdomain,
-        'content': 'storefront.e-com.plus'
-      }
+        // body to create a record on cloudflare
+        let setupDomain = {
+          'type': 'CNAME',
+          'name': body.subdomain,
+          'content': 'storefront.e-com.plus'
+        }
 
-      // function to send the request
-      let send = function () {
+        // function to send the request
+        let send = function () {
+          let req = https.request(options, function (res) {
+            let rawData = ''
+            res.setEncoding('utf8')
+            res.on('data', function (chunk) { rawData += chunk })
+            res.on('end', function () {
+              try {
+                let body = JSON.parse(rawData)
+                if (res.statusCode === 200) {
+                  // done
+                  respond(null, null, 204)
+                } else {
+                  // error authentication
+                  let usrMsg = []
+                  let devMsg
+                  if (body.hasOwnProperty('errors')) {
+                    for (var i = 0; i < body.errors.length; i++) {
+                      // message from error array
+                      usrMsg.push(body.errors[i].message)
+                      // TODO: improve devMsg
+                      devMsg = 'See user_message for more details'
+                    }
+                  } else {
+                    // TODO: improve usrMsg
+                    devMsg = 'Unknown error, see response objet to more info'
+                  }
+
+                  respond({}, null, res.statusCode, 'CF1005', devMsg, usrMsg)
+                }
+              } catch (e) {
+                logger.error(e)
+              }
+            })
+            // ERROR
+            req.on('error', function (err) {
+              // server error
+              logger.error(err)
+              respond({}, null, 500, 'CF1004')
+            })
+
+            // POST
+            req.write(JSON.stringify(setupDomain))
+            // end request
+            req.end()
+
+            // domain redirect
+            if (body.domain_redirect === true) {
+              setupDomain = {
+                'type': 'A',
+                'name': '@',
+                'content': '174.138.108.73' // storefront.e-com.plus
+              }
+              // resend the POST with different body
+              send()
+            }
+          })
+        }
+      // create page rule
+      } else {
+        let options = {
+          hostname: 'api.cloudflare.com',
+          path: '/client/v4/zones/' + body.credentials.zone_id + '/pagerules',
+          method: 'POST',
+          headers: {
+            'X-Auth-Email': body.credentials.email,
+            'X-Auth-Key': body.credentials.api_key,
+            'Content-Type': 'application/json'
+          }
+        }
+        // body to create a page rule on cloudflare
+        let setupPageRule = {
+          'targets': [
+            {
+              'target': body.subdomain
+            }
+          ],
+          'actions': [
+            {
+              'SSL': 'Flexible',
+              'Always Online': 'On',
+              'Security Level': 'Medium',
+              'Cache Level': 'Bypass',
+              'Automatic HTTPS Rewrites': 'On'
+            }
+          ]
+        }
         let req = https.request(options, function (res) {
           let rawData = ''
           res.setEncoding('utf8')
@@ -110,20 +200,22 @@ function post (id, meta, body, respond) {
                 // done
                 respond(null, null, 204)
               } else {
-                // error
-                // @TODO: error handling
-                // we need to treat the errors
-                // response must be more conclusive and with usrMsg too
-                // at this moment we are reponding only with devMsg
-                let msg
+                // error authentication
+                let usrMsg = []
+                let devMsg
                 if (body.hasOwnProperty('errors')) {
-                  msg = body.errors
+                  for (var i = 0; i < body.errors.length; i++) {
+                    // message from error array
+                    usrMsg.push(body.errors[i].message)
+                    // TODO: improve devMsg
+                    devMsg = 'See user_message for more details'
+                  }
                 } else {
-                  msg = 'Unknown error, see response objet to more info'
-                  // logger.error(body)
+                  // TODO: improve usrMsg
+                  devMsg = 'Unknown error, see response objet to more info'
                 }
 
-                respond({}, null, res.statusCode, 'CF1005', msg)
+                respond({}, null, res.statusCode, 'CF1006', devMsg, usrMsg)
               }
             } catch (e) {
               logger.error(e)
@@ -137,20 +229,9 @@ function post (id, meta, body, respond) {
           })
 
           // POST
-          req.write(JSON.stringify(setupDomain))
+          req.write(JSON.stringify(setupPageRule))
           // end request
           req.end()
-
-          // domain redirect
-          if (body.domain_redirect === true) {
-            setupDomain = {
-              'type': 'A',
-              'name': '@',
-              'content': '174.138.108.73' // storefront.e-com.plus
-            }
-            // resend the POST with different body
-            send()
-          }
         })
       }
     }
