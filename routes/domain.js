@@ -81,11 +81,10 @@ function post (id, meta, body, respond) {
       ajvErrorHandling(createValidate.errors, respond)
     } else {
       let https = require('https')
-      let path = '/client/v4/zones/' + body.credentials.zone_id + '/dns_records'
       // create dns record
       let options = {
         hostname: 'api.cloudflare.com',
-        path: path,
+        path: '/client/v4/zones/' + body.credentials.zone_id + '/dns_records',
         method: 'POST',
         headers: {
           'X-Auth-Email': body.credentials.email,
@@ -102,6 +101,9 @@ function post (id, meta, body, respond) {
         'content': 'storefront.e-com.plus'
       }
 
+      let done = 0
+      let errorRequest = false
+
       // function to send the request
       let send = function () {
         let req = https.request(options, function (res) {
@@ -109,14 +111,26 @@ function post (id, meta, body, respond) {
           res.setEncoding('utf8')
           res.on('data', function (chunk) { rawData += chunk })
           res.on('end', function () {
-            try {
-              let body = JSON.parse(rawData)
+            if (errorRequest === false) {
+              let response
+              try {
+                response = JSON.parse(rawData)
+              } catch (e) {
+                let devMsg = 'Cloudflare sent a invalid JSON'
+                respond({}, null, res.statusCode, 'CF1007', devMsg)
+              }
+
               if (res.statusCode === 200) {
-                // done
-                respond(null, null, 204)
+                done++
+                if (body.domain_redirect === true && done === 3) {
+                  respond(null, null, 204)
+                } else if (done === 2) {
+                  respond(null, null, 204)
+                }
               } else {
+                errorRequest = true
                 // error authentication
-                if (body.hasOwnProperty('errors')) {
+                if (response.hasOwnProperty('errors')) {
                   // example of error response
                   // {
                   //   "result": null,
@@ -126,22 +140,19 @@ function post (id, meta, body, respond) {
                   // }
 
                   let usrMsg = {
-                    'en_us': body.errors[0].message
+                    'en_us': response.errors[0].message
                   }
 
                   // translate to portuguese
-                  translate(body.errors[0].message, {from: 'en', to: 'pt'}).then(res => {
+                  translate(response.errors[0].message, {from: 'en', to: 'pt'}).then(res => {
                     usrMsg.pt_br = res.text
+                    let devMsg = 'Error code:' + response.errors[0].code + ', more details on usrMsg'
+                    respond({}, null, res.statusCode, 'CF1005', devMsg, usrMsg)
                   }).catch(err => {
                     console.error(err)
                   })
-
-                  let devMsg = 'Error code:' + body.errors[0].code + ', more details on usrMsg'
-                  respond({}, null, res.statusCode, 'CF1005', devMsg, usrMsg)
                 }
               }
-            } catch (e) {
-              logger.error(e)
             }
           })
           // ERROR
@@ -157,6 +168,8 @@ function post (id, meta, body, respond) {
           req.end()
         })
       }
+      // first request
+      send()
 
       // domain redirect
       if (body.domain_redirect === true) {
@@ -191,7 +204,7 @@ function post (id, meta, body, respond) {
         ],
         'status': 'active'
       }
-      path = '/client/v4/zones/' + body.credentials.zone_id + '/pagerules'
+      options.path = '/client/v4/zones/' + body.credentials.zone_id + '/pagerules'
       send()
     }
   }
