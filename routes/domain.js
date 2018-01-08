@@ -200,13 +200,14 @@ function post (id, meta, body, respond) {
         setup = {
           'type': 'A',
           'name': '@',
-          'content': '174.138.108.73' // storefront.e-com.plus
+          // storefront.e-com.plus
+          'content': '174.138.108.73'
         }
         // resend the POST with different body
         send()
       }
 
-      // create a page rules
+      // create page rules
       options.path = '/client/v4/zones/' + body.credentials.zone_id + '/pagerules'
 
       setup = {
