@@ -116,8 +116,7 @@ function post (id, meta, body, respond) {
               try {
                 response = JSON.parse(rawData)
               } catch (e) {
-                let devMsg = 'Cloudflare sent a invalid JSON'
-                respond({}, null, res.statusCode, 'CF1007', devMsg)
+                respond({}, null, res.statusCode, 'CF1007', 'Cloudflare sent a invalid JSON')
                 return
               }
 
