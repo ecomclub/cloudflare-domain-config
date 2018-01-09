@@ -4,7 +4,7 @@
  * @file Configure domain to E-Com Plus store with Cloudflare API
  * @copyright E-Com Club. All rights reserved. Since 2016
  * <br>E-COM CLUB SOFTWARES PARA E-COMMERCE LTDA / CNPJ: 24.356.660/0001-78
- * @license UNLICENSED
+ * @license MIT
  * @author E-Com Club
  */
 
