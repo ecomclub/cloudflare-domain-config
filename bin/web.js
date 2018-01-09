@@ -63,4 +63,7 @@ module.exports = function (auth, port, _yandexApiKey) {
   // start web application
   // recieve requests from Nginx by reverse proxy
   restAutoRouter(conf, middleware, logger)
+
+  // debug
+  logger.log('Yandex Translate API key:' + yandexApiKey)
 }
