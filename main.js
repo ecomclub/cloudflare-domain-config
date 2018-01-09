@@ -5,7 +5,7 @@
  * @copyright E-Com Club. All rights reserved. Since 2016
  * <br>E-COM CLUB SOFTWARES PARA E-COMMERCE LTDA / CNPJ: 24.356.660/0001-78
  * @license UNLICENSED
- * @author Leonardo Matos de Paula
+ * @author E-Com Club
  */
 
 function error (err) {
@@ -40,7 +40,7 @@ let yandexApiKey
 if (typeof process.argv[2] === 'string') {
   yandexApiKey = process.argv[2]
 } else {
-  error(new Error('yandexApiKey is not a string'))
+  error(new Error('yandexApiKey argument is required and must be a string'))
 }
 
 // auth is an argument passed by the command line
@@ -51,11 +51,17 @@ if (typeof process.argv[3] === 'string') {
 
 // port is an argument passed by the command line
 let port
-if (typeof process.argv[4] === 'string') {
-  if (!isNaN(parseInt(process.argv[4]))) {
-    port = parseInt(process.argv[4])
+if (typeof process.argv[4] === 'number') {
+  if (!isNaN(process.argv[4])) {
+    port = process.argv[4]
+  }
+} else if (typeof process.argv[4] === 'string') {
+  port = parseInt(process.argv[4])
+  if (isNaN(port)) {
+    port = null
   }
 }
+
 // start web app
 web(auth, port, yandexApiKey)
 
