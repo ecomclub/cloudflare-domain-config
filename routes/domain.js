@@ -164,8 +164,14 @@ function post (id, meta, body, respond, yandexApiKey) {
                     respond({}, null, res.statusCode, 'CF1010')
                   } else {
                     // translate to portuguese
-                    translate(usrMsg.en_us, {to: 'pt', engine: 'yandex', key: yandexApiKey}).then(text => {
-                      usrMsg.pt_br = text
+                    translate(usrMsg.en_us, {
+                      to: 'pt',
+                      engine: 'yandex',
+                      key: yandexApiKey
+                    }).then(text => {
+                      if (text != null) {
+                        usrMsg.pt_br = text
+                      }
                       respond({}, null, res.statusCode, 'CF1005', devMsg, usrMsg)
                     }).catch(err => {
                       logger.error(err)
