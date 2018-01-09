@@ -6,7 +6,7 @@
   "scripts": {
     "test": "node ./main.js"
   },
-  "author": "Leonardo Matos de Paula",
+  "author": "E-Com Club",
   "license": "UNLICENSED",
   "dependencies": {
     "rest-auto-router": "3.x",
@@ -15,4 +15,3 @@
     "translate": "1.x"
   }
 }
-
