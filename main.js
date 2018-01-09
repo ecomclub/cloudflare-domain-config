@@ -32,8 +32,35 @@ process.on('uncaughtException', (err) => {
 // web application
 // recieve requests from Nginx by reverse proxy
 let web = require('./bin/web.js')
+
+// yandexApiKey is an argument required passed by the command line
+let yandexApiKey
+if (typeof process.argv[2] === 'string') {
+  yandexApiKey = process.argv[2]
+} else {
+  console.error('yandexApiKey is not a string')
+  process.exit(1)
+}
+
+// auth is an argument passed by the command line
+let auth
+if (typeof process.argv[3] === 'string') {
+  auth = process.argv[3]
+} else {
+  auth = null
+}
+
+// port is an argument passed by the command line
+let port
+if (typeof process.argv[4] === 'string') {
+  if (!isNaN(parseInt(process.argv[4]))) {
+    port = process.argv[4]
+  }
+} else {
+  port = null
+}
 // start web app
-web()
+web(auth, port, yandexApiKey)
 
 // local application
 // executable server side only
