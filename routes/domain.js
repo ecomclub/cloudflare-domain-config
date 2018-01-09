@@ -241,7 +241,7 @@ function post (id, meta, body, respond, yandexApiKey) {
           'target': 'url',
           'constraint': {
             'operator': 'matches',
-            'value': body.subdomain + '.' + body.domain + '/*'
+            'value': 'http://' + body.subdomain + '.' + body.domain + '/*'
           }
         }],
         'actions': [{
