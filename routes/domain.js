@@ -231,7 +231,7 @@ function post (id, meta, body, respond, yandexApiKey) {
           'id': 'always_use_https',
           'value': 'on'
         }],
-        'priority': 1,
+        'priority': 2,
         'status': 'active'
       }
       send()
@@ -260,7 +260,7 @@ function post (id, meta, body, respond, yandexApiKey) {
           'id': 'explicit_cache_control',
           'value': 'on'
         }],
-        'priority': 2,
+        'priority': 1,
         'status': 'active'
       }
       send()
