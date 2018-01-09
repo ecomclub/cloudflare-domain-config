@@ -180,18 +180,18 @@ function post (id, meta, body, respond) {
               }
             }
           })
-
-          req.on('error', function (err) {
-            // server error
-            logger.error(err)
-            respond({}, null, 500, 'CF1004')
-          })
-
-          // POST body
-          req.write(JSON.stringify(setup))
-          // end request
-          req.end()
         })
+        
+        req.on('error', function (err) {
+          // server error
+          logger.error(err)
+          respond({}, null, 500, 'CF1004')
+        })
+
+        // POST body
+        req.write(JSON.stringify(setup))
+        // end request
+        req.end()
       }
       // first request
       send()
