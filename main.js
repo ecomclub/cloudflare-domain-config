@@ -40,7 +40,7 @@ let yandexApiKey
 if (typeof process.argv[2] === 'string') {
   yandexApiKey = process.argv[2]
 } else {
-  error(new Error('yandexApiKey argument is required and must be a string'))
+  error(new Error('yandexApiKey cli argument is required and must be a string'))
 }
 
 // auth is an argument passed by the command line
