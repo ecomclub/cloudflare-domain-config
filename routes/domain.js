@@ -99,7 +99,8 @@ function post (id, meta, body, respond, yandexApiKey) {
       setup = {
         'type': 'CNAME',
         'name': body.subdomain,
-        'content': 'storefront.e-com.plus'
+        'content': 'storefront.e-com.plus',
+        'proxied': true
       }
 
       // count sent and finished requests
@@ -208,7 +209,8 @@ function post (id, meta, body, respond, yandexApiKey) {
           'type': 'A',
           'name': '@',
           // storefront.e-com.plus
-          'content': '174.138.108.73'
+          'content': '174.138.108.73',
+          'proxied': true
         }
         // resend the POST with different body
         send()
