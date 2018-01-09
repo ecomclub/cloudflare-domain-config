@@ -12,7 +12,7 @@ const ajv = Ajv({ allErrors: true })
 // https://github.com/epoberezkin/ajv-i18n
 
 const translate = require('translate')
-// https://github.com/Marak/translate.js
+// https://www.npmjs.com/package/translate
 
 const createSchema = {
   '$schema': 'http://json-schema.org/draft-06/schema#',
