@@ -12,7 +12,7 @@
     "rest-auto-router": "3.x",
     "ajv": "5.x",
     "ajv-i18n": "2.x",
-    "google-translate-api": "2.x"
+    "translate": "1.x"
   }
 }
 
