@@ -241,7 +241,7 @@ function post (id, meta, body, respond, yandexApiKey) {
           'target': 'url',
           'constraint': {
             'operator': 'matches',
-            'value': 'http://' + body.subdomain + '.' + body.domain + '/*'
+            'value': body.subdomain + '.' + body.domain + '/*'
           }
         }],
         'actions': [{
@@ -257,7 +257,7 @@ function post (id, meta, body, respond, yandexApiKey) {
           'id': 'cache_level',
           'value': 'cache_everything'
         }, {
-          'id': 'origin_cache_control',
+          'id': 'explicit_cache_control',
           'value': 'on'
         }],
         'priority': 2,
