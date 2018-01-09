@@ -72,7 +72,7 @@ function ajvErrorHandling (errors, respond) {
   respond({}, null, 400, 'CF1001', devMsg, usrMsg, moreInfo)
 }
 
-function post (id, meta, body, respond) {
+function post (id, meta, body, respond, yandexApiKey) {
   if (id) {
     respond({}, null, 406, 'CF1002', 'Unexpected resource ID on request URL')
   } else {
@@ -181,7 +181,7 @@ function post (id, meta, body, respond) {
             }
           })
         })
-        
+
         req.on('error', function (err) {
           // server error
           logger.error(err)

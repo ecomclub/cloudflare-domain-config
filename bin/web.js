@@ -37,6 +37,30 @@ const conf = {
   'vary_fields': false
 }
 
-// start web application
-// recieve requests from Nginx by reverse proxy
-restAutoRouter(conf, null, logger)
+let yandexApiKey
+
+function middleware (id, meta, body, respond, req, res, resource, verb, endpoint) {
+  // function called before endpoints
+  // authentications and other prerequisites when necessary
+  // logger.log(resource)
+  if (typeof req.headers['x-real-ip'] === 'string') {
+    // pass to endpoint
+    endpoint(id, meta, body, respond, yandexApiKey)
+  } else {
+    respond({}, null, 403, 100, 'Who are you? Unknown IP address')
+  }
+}
+
+module.exports = function (auth, port, _yandexApiKey) {
+  if (auth) {
+    conf.proxy.auth = auth
+  }
+  if (port) {
+    conf.port = port
+  }
+  yandexApiKey = _yandexApiKey
+
+  // start web application
+  // recieve requests from Nginx by reverse proxy
+  restAutoRouter(conf, middleware, logger)
+}

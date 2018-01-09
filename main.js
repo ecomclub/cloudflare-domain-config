@@ -31,7 +31,9 @@ process.on('uncaughtException', (err) => {
 
 // web application
 // recieve requests from Nginx by reverse proxy
-require('./bin/web.js')
+let web = require('./bin/web.js')
+// start web app
+web()
 
 // local application
 // executable server side only
