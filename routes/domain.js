@@ -11,8 +11,9 @@ const localize = require('ajv-i18n')
 const ajv = Ajv({ allErrors: true })
 // https://github.com/epoberezkin/ajv-i18n
 
-const translate = require('google-translate-api')
-// google-translate-api -> https://github.com/matheuss/google-translate-api
+const translate = require('translate')
+// https://github.com/Marak/translate.js
+
 const createSchema = {
   '$schema': 'http://json-schema.org/draft-06/schema#',
   'type': 'object',
@@ -163,8 +164,8 @@ function post (id, meta, body, respond) {
                     respond({}, null, res.statusCode, 'CF1010')
                   } else {
                     // translate to portuguese
-                    translate(usrMsg.en_us, { from: 'en', to: 'pt' }).then(res => {
-                      usrMsg.pt_br = res.text
+                    translate(usrMsg.en_us, 'pt').then(text => {
+                      usrMsg.pt_br = text
                       respond({}, null, res.statusCode, 'CF1005', devMsg, usrMsg)
                     }).catch(err => {
                       logger.error(err)
