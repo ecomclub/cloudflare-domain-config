@@ -8,7 +8,7 @@
  * @author Leonardo Matos de Paula
  */
 
-process.on('uncaughtException', (err) => {
+function error (err) {
   // fatal error
   // log to file before exit
   let msg = '\n[' + new Date().toString() + ']\n'
@@ -27,7 +27,9 @@ process.on('uncaughtException', (err) => {
   fs.appendFile('/var/log/nodejs/_stderr', msg, () => {
     process.exit(1)
   })
-})
+}
+
+process.on('uncaughtException', error)
 
 // web application
 // recieve requests from Nginx by reverse proxy
@@ -38,26 +40,21 @@ let yandexApiKey
 if (typeof process.argv[2] === 'string') {
   yandexApiKey = process.argv[2]
 } else {
-  console.error('yandexApiKey is not a string')
-  process.exit(1)
+  error(new Error('yandexApiKey is not a string'))
 }
 
 // auth is an argument passed by the command line
 let auth
 if (typeof process.argv[3] === 'string') {
   auth = process.argv[3]
-} else {
-  auth = null
 }
 
 // port is an argument passed by the command line
 let port
 if (typeof process.argv[4] === 'string') {
   if (!isNaN(parseInt(process.argv[4]))) {
-    port = process.argv[4]
+    port = parseInt(process.argv[4])
   }
-} else {
-  port = null
 }
 // start web app
 web(auth, port, yandexApiKey)
