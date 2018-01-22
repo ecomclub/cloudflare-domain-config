@@ -208,8 +208,7 @@ function post (id, meta, body, respond, yandexApiKey) {
         setup = {
           'type': 'A',
           'name': '@',
-          // storefront.e-com.plus
-          'content': '174.138.108.73',
+          'content': '8.8.8.8',
           'proxied': true
         }
         // resend the POST with different body
@@ -264,6 +263,29 @@ function post (id, meta, body, respond, yandexApiKey) {
         'status': 'active'
       }
       send()
+
+      // domain redirect
+      if (body.domain_redirect === true) {
+        setup = {
+          'targets': [{
+            'target': 'url',
+            'constraint': {
+              'operator': 'matches',
+              'value': body.domain + '/*'
+            }
+          }],
+          'actions': [{
+            'id': 'forwarding_url',
+            'value': {
+              'url': 'https://' + body.subdomain + '.' + body.domain + '/$1',
+              'status_code': 302
+            }
+          }],
+          'priority': 3,
+          'status': 'active'
+        }
+        send()
+      }
     }
   }
 }
