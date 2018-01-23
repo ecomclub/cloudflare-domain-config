@@ -1,5 +1,14 @@
 'use strict'
 
+/*
+@TODO
++ treat errors
+  + cannot add subdomain DNS record
+  + cannot add at least the first page rule (essential)
++ add 'force' property, if 'force' === true
+  + delete subdomain DNS record and page rules first, then continue normal tasks
+*/
+
 // log on files
 const logger = require('./../lib/Logger.js')
 
