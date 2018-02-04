@@ -123,91 +123,94 @@ function post (id, meta, body, respond, yandexApiKey) {
         // more one request
         requests++
 
-        let req = https.request(options, function (res) {
-          let rawData = ''
-          res.setEncoding('utf8')
-          res.on('data', function (chunk) { rawData += chunk })
-          res.on('end', function () {
-            if (!errorRequest) {
-              let response
-              try {
-                response = JSON.parse(rawData)
-              } catch (e) {
-                respond({}, null, res.statusCode, 'CF1007', 'Cloudflare sent a invalid JSON')
-                return
-              }
-
-              if (res.statusCode === 200) {
-                done++
-                // check if all requests are done
-                // DNS and page rules
-                if (done === requests) {
-                  respond(null, null, 204)
+        // send request asynchronously
+        setTimeout(() => {
+          let req = https.request(options, function (res) {
+            let rawData = ''
+            res.setEncoding('utf8')
+            res.on('data', function (chunk) { rawData += chunk })
+            res.on('end', function () {
+              if (!errorRequest) {
+                let response
+                try {
+                  response = JSON.parse(rawData)
+                } catch (e) {
+                  respond({}, null, res.statusCode, 'CF1007', 'Cloudflare sent a invalid JSON')
+                  return
                 }
-              } else {
-                // set error true to not treat other responses
-                errorRequest = true
 
-                if (typeof response === 'object' && response !== null && Array.isArray(response.errors)) {
-                  // example of error response
-                  // {
-                  //   "result": null,
-                  //   "success": false,
-                  //   "errors": [{"code":1003,"message":"Invalid or missing zone id."}],
-                  //   "messages": []
-                  // }
-                  let devMsg
-                  let usrMsg = {}
-
-                  for (let i = 0; i < response.errors.length; i++) {
-                    if (typeof response.errors[i] === 'object' && response.errors[i] !== null) {
-                      if (response.errors[i].hasOwnProperty('message')) {
-                        usrMsg.en_us = response.errors[i].message
-                        devMsg = 'Error code: ' + response.errors[i].code + ', more details on user_message'
-                        break
-                      }
-                    }
-                  }
-
-                  if (devMsg === undefined) {
-                    // no valid error object in Cloudflare response
-                    respond({}, null, res.statusCode, 'CF1010')
-                  } else {
-                    // translate to portuguese
-                    translate(usrMsg.en_us, {
-                      to: 'pt',
-                      engine: 'yandex',
-                      key: yandexApiKey
-                    }).then(text => {
-                      if (text != null) {
-                        usrMsg.pt_br = text
-                      }
-                      respond({}, null, res.statusCode, 'CF1005', devMsg, usrMsg)
-                    }).catch(err => {
-                      logger.error(err)
-                      // respond without pt_br
-                      respond({}, null, res.statusCode, 'CF1009', devMsg, usrMsg)
-                    })
+                if (res.statusCode === 200) {
+                  done++
+                  // check if all requests are done
+                  // DNS and page rules
+                  if (done === requests) {
+                    respond(null, null, 204)
                   }
                 } else {
-                  // unknown error
-                  respond({}, null, res.statusCode, 'CF1008')
+                  // set error true to not treat other responses
+                  errorRequest = true
+
+                  if (typeof response === 'object' && response !== null && Array.isArray(response.errors)) {
+                    // example of error response
+                    // {
+                    //   "result": null,
+                    //   "success": false,
+                    //   "errors": [{"code":1003,"message":"Invalid or missing zone id."}],
+                    //   "messages": []
+                    // }
+                    let devMsg
+                    let usrMsg = {}
+
+                    for (let i = 0; i < response.errors.length; i++) {
+                      if (typeof response.errors[i] === 'object' && response.errors[i] !== null) {
+                        if (response.errors[i].hasOwnProperty('message')) {
+                          usrMsg.en_us = response.errors[i].message
+                          devMsg = 'Error code: ' + response.errors[i].code + ', more details on user_message'
+                          break
+                        }
+                      }
+                    }
+
+                    if (devMsg === undefined) {
+                      // no valid error object in Cloudflare response
+                      respond({}, null, res.statusCode, 'CF1010')
+                    } else {
+                      // translate to portuguese
+                      translate(usrMsg.en_us, {
+                        to: 'pt',
+                        engine: 'yandex',
+                        key: yandexApiKey
+                      }).then(text => {
+                        if (text != null) {
+                          usrMsg.pt_br = text
+                        }
+                        respond({}, null, res.statusCode, 'CF1005', devMsg, usrMsg)
+                      }).catch(err => {
+                        logger.error(err)
+                        // respond without pt_br
+                        respond({}, null, res.statusCode, 'CF1009', devMsg, usrMsg)
+                      })
+                    }
+                  } else {
+                    // unknown error
+                    respond({}, null, res.statusCode, 'CF1008')
+                  }
                 }
               }
-            }
+            })
           })
-        })
 
-        req.on('error', function (err) {
-          // server error
-          logger.error(err)
-          respond({}, null, 500, 'CF1004')
-        })
+          req.on('error', function (err) {
+            // server error
+            logger.error(err)
+            respond({}, null, 500, 'CF1004')
+          })
 
-        // POST body
-        req.write(JSON.stringify(setup))
-        // end request
-        req.end()
+          // POST body
+          req.write(JSON.stringify(setup))
+          // end request
+          req.end()
+        }, 0)
       }
       // first request
       send()
