@@ -27,7 +27,7 @@ const createSchema = {
   '$schema': 'http://json-schema.org/draft-06/schema#',
   'type': 'object',
   'required': [ 'domain', 'subdomain', 'domain_redirect', 'credentials' ],
-  'additionalProperties': false,
+  // 'additionalProperties': false,
   'properties': {
     'domain': {
       'type': 'string',
