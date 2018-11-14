@@ -91,18 +91,6 @@ function post (id, meta, body, respond, yandexApiKey) {
       ajvErrorHandling(createValidate.errors, respond)
     } else {
       const https = require('https')
-      // create dns record
-      const options = {
-        hostname: 'api.cloudflare.com',
-        path: '/client/v4/zones/' + body.credentials.zone_id + '/dns_records',
-        method: 'POST',
-        headers: {
-          'X-Auth-Email': body.credentials.email,
-          'X-Auth-Key': body.credentials.api_key,
-          'Content-Type': 'application/json'
-        }
-      }
-
       // count sent and finished requests
       let requests = 0
       let done = 0
@@ -111,12 +99,23 @@ function post (id, meta, body, respond, yandexApiKey) {
       // compose store domain
       const fullDomain = body.subdomain + '.' + body.domain
 
+      // request options
+      // setup for Cloudflare API
+      // https://api.cloudflare.com/
+      const options = {
+        hostname: 'api.cloudflare.com',
+        method: 'POST',
+        headers: {
+          'X-Auth-Email': body.credentials.email,
+          'X-Auth-Key': body.credentials.api_key,
+          'Content-Type': 'application/json'
+        }
+      }
+
       // function to send the request
       let send = (payload, path) => {
-        if (path) {
-          // replace default API endoint
-          options.path = path
-        }
+        // set API endpoint
+        options.path = path
         // more one request
         requests++
 
@@ -216,6 +215,9 @@ function post (id, meta, body, respond, yandexApiKey) {
         }, 0)
       }
 
+      // create DNS records
+      const dnsEndpoint = '/client/v4/zones/' + body.credentials.zone_id + '/dns_records'
+
       // first request
       // body to create a record on cloudflare
       send({
@@ -223,7 +225,7 @@ function post (id, meta, body, respond, yandexApiKey) {
         'name': body.subdomain,
         'content': 'storefront.e-com.plus',
         'proxied': true
-      })
+      }, dnsEndpoint)
 
       // domain redirect
       if (body.domain_redirect === true) {
@@ -233,7 +235,7 @@ function post (id, meta, body, respond, yandexApiKey) {
           'name': '@',
           'content': '8.8.8.8',
           'proxied': true
-        })
+        }, dnsEndpoint)
       }
 
       // create page rules
