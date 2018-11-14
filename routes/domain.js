@@ -114,14 +114,12 @@ function post (id, meta, body, respond, yandexApiKey) {
 
       // function to send the request
       let send = (payload, path) => {
-        // set API endpoint
-        options.path = path
         // more one request
         requests++
 
         // send request asynchronously
         setTimeout(() => {
-          let req = https.request(options, function (res) {
+          let req = https.request(Object.assign(options, { path }), function (res) {
             let rawData = ''
             res.setEncoding('utf8')
             res.on('data', function (chunk) { rawData += chunk })
