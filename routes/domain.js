@@ -90,9 +90,9 @@ function post (id, meta, body, respond, yandexApiKey) {
     if (!valid) {
       ajvErrorHandling(createValidate.errors, respond)
     } else {
-      let https = require('https')
+      const https = require('https')
       // create dns record
-      let options = {
+      const options = {
         hostname: 'api.cloudflare.com',
         path: '/client/v4/zones/' + body.credentials.zone_id + '/dns_records',
         method: 'POST',
@@ -103,23 +103,20 @@ function post (id, meta, body, respond, yandexApiKey) {
         }
       }
 
-      // body to create a record on cloudflare
-      let setup
-      setup = {
-        'type': 'CNAME',
-        'name': body.subdomain,
-        'content': 'storefront.e-com.plus',
-        'proxied': true
-      }
-
       // count sent and finished requests
       let requests = 0
       let done = 0
       // response with error
       let errorRequest = false
+      // compose store domain
+      const fullDomain = body.subdomain + '.' + body.domain
 
       // function to send the request
-      let send = function () {
+      let send = (payload, path) => {
+        if (path) {
+          // replace default API endoint
+          options.path = path
+        }
         // more one request
         requests++
 
@@ -213,35 +210,43 @@ function post (id, meta, body, respond, yandexApiKey) {
           })
 
           // POST body
-          req.write(JSON.stringify(setup))
+          req.write(JSON.stringify(payload))
           // end request
           req.end()
         }, 0)
       }
+
       // first request
-      send()
+      // body to create a record on cloudflare
+      send({
+        'type': 'CNAME',
+        'name': body.subdomain,
+        'content': 'storefront.e-com.plus',
+        'proxied': true
+      })
 
       // domain redirect
       if (body.domain_redirect === true) {
-        setup = {
+        // resend the POST with different body
+        send({
           'type': 'A',
           'name': '@',
           'content': '8.8.8.8',
           'proxied': true
-        }
-        // resend the POST with different body
-        send()
+        })
       }
 
       // create page rules
-      options.path = '/client/v4/zones/' + body.credentials.zone_id + '/pagerules'
+      const pageRulesEndpoint = '/client/v4/zones/' + body.credentials.zone_id + '/pagerules'
 
-      setup = {
+      // main page rule
+      // setup configurations for store proxy
+      send({
         'targets': [{
           'target': 'url',
           'constraint': {
             'operator': 'matches',
-            'value': body.subdomain + '.' + body.domain + '/*'
+            'value': fullDomain + '/*'
           }
         }],
         'actions': [{
@@ -262,15 +267,15 @@ function post (id, meta, body, respond, yandexApiKey) {
         }],
         'priority': 1,
         'status': 'active'
-      }
-      send()
+      }, pageRulesEndpoint)
 
-      setup = {
+      // force HTTPS
+      send({
         'targets': [{
           'target': 'url',
           'constraint': {
             'operator': 'matches',
-            'value': 'http://' + body.subdomain + '.' + body.domain + '/*'
+            'value': 'http://' + fullDomain + '/*'
           }
         }],
         'actions': [{
@@ -279,12 +284,11 @@ function post (id, meta, body, respond, yandexApiKey) {
         }],
         'priority': 2,
         'status': 'active'
-      }
-      send()
+      }, pageRulesEndpoint)
 
       // domain redirect
       if (body.domain_redirect === true) {
-        setup = {
+        send({
           'targets': [{
             'target': 'url',
             'constraint': {
@@ -295,14 +299,13 @@ function post (id, meta, body, respond, yandexApiKey) {
           'actions': [{
             'id': 'forwarding_url',
             'value': {
-              'url': 'https://' + body.subdomain + '.' + body.domain + '/$1',
+              'url': 'https://' + fullDomain + '/$1',
               'status_code': 302
             }
           }],
           'priority': 3,
           'status': 'active'
-        }
-        send()
+        }, pageRulesEndpoint)
       }
     }
   }
