@@ -165,7 +165,13 @@ function post (id, meta, body, respond, yandexApiKey) {
                       if (typeof response.errors[i] === 'object' && response.errors[i] !== null) {
                         if (response.errors[i].hasOwnProperty('message')) {
                           usrMsg.en_us = response.errors[i].message
-                          devMsg = 'Error code: ' + response.errors[i].code + ', more details on user_message'
+                          devMsg = 'Error code: ' + response.errors[i].code
+                          if (response.messages) {
+                            // pass Cloudflare messages list
+                            devMsg += '\n' + JSON.stringify(response.messages)
+                          } else {
+                            devMsg += ', more details on user_message'
+                          }
                           break
                         }
                       }
