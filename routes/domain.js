@@ -119,7 +119,7 @@ function post (id, meta, body, respond, yandexApiKey) {
 
         // send request asynchronously
         setTimeout(() => {
-          let req = https.request(Object.assign(options, { path }), function (res) {
+          let req = https.request(Object.assign({ path }, options), function (res) {
             let rawData = ''
             res.setEncoding('utf8')
             res.on('data', function (chunk) { rawData += chunk })
