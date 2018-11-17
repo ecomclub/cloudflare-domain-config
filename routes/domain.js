@@ -219,9 +219,9 @@ function post (id, meta, body, respond, yandexApiKey) {
       // first request
       // body to create a record on cloudflare
       send({
-        'type': 'CNAME',
+        'type': 'A',
         'name': body.subdomain,
-        'content': 'storefront.e-com.plus',
+        'content': '174.138.108.73',
         'proxied': true
       }, dnsEndpoint)
 
